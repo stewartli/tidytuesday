@@ -1,0 +1,35 @@
+---
+title: '2018-11-06'
+author: Tanner Koomar
+output: 
+ html_document::
+   toc: true
+---
+
+#### Load Data
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+dat <- read_csv("../data/2018-11-06/us_wind.csv")
+```
+
+
+```{r}
+dat %>% 
+  filter(xlong < 100 & xlong > -125 & ylat > 20) %>% 
+  filter(t_cap > 0 & t_cap < 6000) %>% 
+  ggplot(aes(x = xlong, ylat, color = t_cap, size = p_tnum, alpha = p_tnum)) +
+  scale_color_viridis_c() + 
+  geom_point()
+```
+
+```{r}
+dat %>% 
+    filter(xlong < 100 & xlong > -125 & ylat > 20) %>% 
+  filter(t_cap > 0 & t_cap < 6000) %>% 
+  mutate(cluster = kmeans(dat %>%     filter(xlong < 100 & xlong > -125 & ylat > 20) %>% 
+  filter(t_cap > 0 & t_cap < 6000) %>% select_if(is.numeric), centers = 5)$cluster) %>% ggplot(aes(x = xlong, y = ylat, color = as.factor(cluster))) + geom_point()
+```
+
