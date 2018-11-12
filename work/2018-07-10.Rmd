@@ -1,0 +1,107 @@
+---
+title: '2018-07-10'
+author: Tanner Koomar
+output: 
+ github_document:
+   toc: true
+---
+
+## Load Data
+
+```{r}
+library(tidyverse)
+library(readxl)
+
+dat_beer <- read_xlsx("../data/2018-07-10/week15_beers.xlsx", sheet = 1)
+
+dat_brew <- read_xlsx("../data/2018-07-10/week15_beers.xlsx", sheet = 2)
+```
+
+```{r}
+dat_beer %>% group_by(brewery_id) %>% 
+#  summarize_if(is.numeric, .funs = mean, na.rm = T) %>%
+  ggplot(aes(x = abv, y = ibu)) + 
+  geom_point() + 
+  stat_smooth(method = "lm") 
+```
+
+## Geographic Distribution of Breweries
+
+```{r}
+states <- tibble(state = state.abb, state_name = state.name, state_region = state.region, state_division = state.division)
+```
+
+```{r}
+dat <- dat_brew %>% rename("brewery_id" = "id", "brewery_name" = "name") %>%
+  select(-count) %>%
+  full_join(dat_beer) %>%
+  full_join(states) 
+```
+
+```{r}
+plot.a <- dat %>% arrange(state_region, state_division) %>%
+  group_by(state_region) %>% 
+  summarize(total_breweries = length(unique(brewery_id))) %>%      filter(!is.na(state_region)) %>%
+  ggplot(aes(y = total_breweries, x = state_region, fill = state_region)) + 
+  geom_col() + 
+  coord_flip() + 
+  theme(legend.position = 'none')
+
+plot.b <- dat %>% arrange(state_region, state_division) %>%
+  group_by(state_region, state_division) %>% 
+  summarize(total_breweries = length(unique(brewery_id))) %>%
+  filter(!is.na(state_region)) %>%
+  ggplot(aes(y = total_breweries, x = state_division, fill = state_division)) +
+  geom_col() + 
+  coord_flip()+ 
+  theme(legend.position = 'none')
+
+
+plot.c <- dat %>% arrange(state_region, state_division) %>%
+  group_by(state_region, state_division, state) %>% 
+  summarize(total_breweries = length(unique(brewery_id))) %>%
+  filter(!is.na(state_region)) %>%
+  arrange(state_region, state_division) %>% ungroup %>%
+  mutate(state = factor(state, unique(state))) %>%
+  ggplot(aes(y = total_breweries, x = state, fill = state)) +
+  geom_col() + 
+  coord_flip()+ 
+  theme(legend.position = 'none')
+
+```
+
+### The Plot
+
+```{r}
+library(cowplot)
+
+plot_grid(plot.a, plot.b, plot.c, nrow = 1)
+```
+
+## What words show up most in craft beer names?
+
+
+```{r}
+library(tidytext)
+data("stop_words")
+library(ggrepel)
+
+dat %>% unnest_tokens(word, name, drop = F) %>% 
+  unnest_tokens(style_token, style, drop = F) %>%
+  group_by(name, style) %>%                            ## group by name, so we're only dropping terms in that beer's style
+  filter(!str_detect(word, unique(style_token))) %>%
+  anti_join(stop_words) %>%                            ## drop stop words  
+  filter(!str_detect(word, "^[0-9]")) %>%              ## drop years
+  count(word, sort = T) %>%
+  
+  ggplot(
+  aes(x = 1, y = 1, size = n, label = word)
+  ) +
+  geom_text_repel(segment.size = 0, force = 100) +
+  scale_size(range = c(2, 15), guide = FALSE) +
+  scale_y_continuous(breaks = NULL) +
+  scale_x_continuous(breaks = NULL) +
+  labs(x = '', y = '') +
+  theme_classic()
+```
+
