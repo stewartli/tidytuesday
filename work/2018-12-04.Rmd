@@ -339,7 +339,7 @@ plot_violin <- dat_bb %>%
                fun.ymax = function(x){ quantile(x, probs = 0.75) }, 
                size = 0.75, color = "black"
                  ) +
-  xlab("theme of post") + 
+  xlab("post theme") + 
   ylab("time to read post") + 
   scale_fill_manual(values = c(pink, olive)) + 
   scale_color_manual(values = c(pink, olive)) + 
@@ -569,9 +569,9 @@ grid.arrange(header,
              plot_leg,
              infin_list,
              verb_list,
-             plot_violin + theme(legend.position = 'none') + labs(tag = "a"),
-             plot_sent + theme(legend.position = 'none'),
-             plot_topic + theme(legend.position = 'none'),
+             plot_violin + theme(legend.position = 'none') + labs(tag = "(a)"),
+             plot_sent + theme(legend.position = 'none') + labs(tag = "(b)"),
+             plot_topic + theme(legend.position = 'none')+ labs(tag = "(c)"),
              bot_sidebar,
              footer,
              heights = c(15, 30, 20, 30, 30, 5),
